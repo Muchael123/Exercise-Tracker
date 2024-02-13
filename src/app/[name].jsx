@@ -1,27 +1,51 @@
 import { Text,  StyleSheet, ScrollView } from "react-native";
 import { Stack, useLocalSearchParams } from "expo-router";
-import exercises from '../../assets/data/exercises.json'
 import { useState } from "react";
+import { gql } from "graphql-request";
+import { useQuery } from "@tanstack/react-query";
+import Client from "../graphqlClient";
+import { ActivityIndicator } from "react-native";
+
+const exerciseQuery = gql`
+query Exercises( $name: String){
+  Exercises( name: $name){
+      equipment
+      instructions
+      muscle
+      name
+  }
+}`
 
 export default function ExerciseDetails(){
-    const params = useLocalSearchParams();
-    const exercise = exercises.find((item) => item.name === params.name)
-    const [instruction, SetInstructions] = useState(false)
+    const {name} = useLocalSearchParams();
+    
+    const [Isinstruction, SetInstructions] = useState(false)
 
-    if(!exercise){
-        return <Text>Exercise not found</Text>
+    const {data, isLoading, error} = useQuery({
+      queryKey: ['Exercises', name],
+      queryFn: () => Client.request(exerciseQuery, {name})
+    })
+  
+    if(isLoading){
+      return <ActivityIndicator/>;
     }
+    if(error){
+      return <Text>Failed to fetch Exercises</Text>
+    }
+    
+    const Exercises = data.Exercises[0]
     return (
         <ScrollView contentContainerStyle={styles.Exercises}>
-          <Stack.Screen options={{title: exercise.name}}/>
-            <Text style={styles.text1}>{exercise.name}</Text>
+          
+          <Stack.Screen options={{title: Exercises?.name}}/>
+            <Text style={styles.text1}>{Exercises?.name}</Text>
       <Text style={styles.text2}>
-        <Text style={styles.subValue}>{exercise.muscle}</Text>
-         |{" "} <Text style={styles.subValue}>{exercise.equipment}</Text>
+        <Text style={styles.subValue}>{Exercises?.muscle}</Text>
+         |{" "} <Text style={styles.subValue}>{Exercises?.equipment}</Text>
        
       </Text>
-      <Text style={styles.instructions} numberOfLines={instruction ? 0: 3}>{exercise.instructions}</Text>
-      <Text style={styles.More} onPress={() => SetInstructions((prev) => !prev)}>{instruction ? 'See Less': 'See More'}</Text>
+      <Text style={styles.instructions} numberOfLines={Isinstruction ? 0: 3}>{Exercises?.instructions}</Text>
+      <Text style={styles.More} onPress={() => SetInstructions((prev) => !prev)}>{Isinstruction ? 'See Less': 'See More'}</Text>
         </ScrollView>
     )
 }
