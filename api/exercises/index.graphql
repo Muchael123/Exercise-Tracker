@@ -1,0 +1,18 @@
+type Exercises {
+  difficulty: String
+  equipment: String
+  instructions: String
+  muscle: String
+  name: String
+  type: String
+}
+
+type Query {
+  Exercises(muscle: String, name: String): [Exercises]
+    @rest(
+      endpoint: "https://api.api-ninjas.com/v1/exercises"
+      headers: [
+        { name: "x-api-key", value: "2Rojm5xhLMX0Oz3K5DsO/g==ZImRlr6vsPzUMFD0" }
+      ]
+    )
+}
